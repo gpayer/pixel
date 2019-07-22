@@ -54,6 +54,7 @@ func (c *Canvas) SetUniform(name string, value interface{}) {
 // framebuffer. Argument "src" is the GLSL source, not a filename.
 func (c *Canvas) SetFragmentShader(src string) {
 	c.shader.fs = src
+	c.shader.isBase = false
 	c.shader.update()
 }
 

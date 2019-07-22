@@ -23,6 +23,7 @@ type glShader struct {
 		bounds    mgl32.Vec4
 		texbounds mgl32.Vec4
 	}
+	isBase bool
 }
 
 type gsUniformAttr struct {
@@ -32,8 +33,15 @@ type gsUniformAttr struct {
 	ispointer bool
 }
 
+var compiledBaseShader *glhf.Shader
+
 // reinitialize GLShader data and recompile the underlying gl shader object
 func (gs *glShader) update() {
+	if gs.isBase && compiledBaseShader != nil {
+		gs.s = compiledBaseShader
+		return
+	}
+
 	gs.uf = nil
 	for _, u := range gs.uniforms {
 		gs.uf = append(gs.uf, glhf.Attr{
@@ -56,6 +64,9 @@ func (gs *glShader) update() {
 	})
 
 	gs.s = shader
+	if gs.isBase {
+		compiledBaseShader = shader
+	}
 }
 
 // gets the uniform index from GLShader
@@ -76,6 +87,8 @@ func (gs *glShader) getUniform(Name string) int {
 //   utime := float32(time.Since(starttime)).Seconds())
 //   mycanvas.shader.AddUniform("u_time", &utime)
 func (gs *glShader) setUniform(name string, value interface{}) {
+	gs.isBase = false
+
 	t, p := getAttrType(value)
 	if loc := gs.getUniform(name); loc > -1 {
 		gs.uniforms[loc].Name = name
@@ -97,9 +110,10 @@ func (gs *glShader) setUniform(name string, value interface{}) {
 // by simply using the SetUniform function.
 func baseShader(c *Canvas) {
 	gs := &glShader{
-		vf: defaultCanvasVertexFormat,
-		vs: baseCanvasVertexShader,
-		fs: baseCanvasFragmentShader,
+		vf:     defaultCanvasVertexFormat,
+		vs:     baseCanvasVertexShader,
+		fs:     baseCanvasFragmentShader,
+		isBase: true,
 	}
 
 	gs.setUniform("uTransform", &gs.uniformDefaults.transform)
