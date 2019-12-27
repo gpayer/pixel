@@ -85,6 +85,8 @@ type Window struct {
 	}
 
 	prevJoy, currJoy, tempJoy joystickState
+
+	mouseBtnCallback func(btn Button, pressed bool)
 }
 
 var currWin *Window

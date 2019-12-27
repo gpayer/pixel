@@ -69,6 +69,11 @@ func (w *Window) Typed() string {
 	return w.currInp.typed
 }
 
+// SetMouseBtnCallback sets a callback which is called for every mouse button event.
+func (w *Window) SetMouseBtnCallback(callback func(btn Button, pressed bool)) {
+	w.mouseBtnCallback = callback
+}
+
 // Button is a keyboard or mouse button. Why distinguish?
 type Button int
 
@@ -358,12 +363,15 @@ var buttonNames = map[Button]string{
 func (w *Window) initInput() {
 	mainthread.Call(func() {
 		w.window.SetMouseButtonCallback(func(_ *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
+			pressed := true
 			switch action {
 			case glfw.Press:
 				w.tempInp.buttons[Button(button)] = true
 			case glfw.Release:
 				w.tempInp.buttons[Button(button)] = false
+				pressed = false
 			}
+			w.mouseBtnCallback(Button(button), pressed)
 		})
 
 		w.window.SetKeyCallback(func(_ *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
