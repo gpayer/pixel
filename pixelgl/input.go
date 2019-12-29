@@ -360,7 +360,22 @@ var buttonNames = map[Button]string{
 	KeyMenu:           "Menu",
 }
 
+type mouseBtnChnData struct {
+	btn     Button
+	pressed bool
+}
+
 func (w *Window) initInput() {
+	mouseBtnChn := make(chan mouseBtnChnData)
+	go func() {
+		for {
+			data := <-mouseBtnChn
+			if w.mouseBtnCallback != nil {
+				w.mouseBtnCallback(data.btn, data.pressed)
+			}
+		}
+	}()
+
 	mainthread.Call(func() {
 		w.window.SetMouseButtonCallback(func(_ *glfw.Window, button glfw.MouseButton, action glfw.Action, mod glfw.ModifierKey) {
 			pressed := true
@@ -371,7 +386,7 @@ func (w *Window) initInput() {
 				w.tempInp.buttons[Button(button)] = false
 				pressed = false
 			}
-			w.mouseBtnCallback(Button(button), pressed)
+			mouseBtnChn <- mouseBtnChnData{Button(button), pressed}
 		})
 
 		w.window.SetKeyCallback(func(_ *glfw.Window, key glfw.Key, scancode int, action glfw.Action, mods glfw.ModifierKey) {
